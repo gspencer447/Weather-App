@@ -1,25 +1,28 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Weather Forecast</title>
     <link rel="stylesheet" type="text/css" href="weather.css" />
-</head>
-<body>
-    <h1>Weather Forecast</h1>
+  </head>
+  <body>
+    <h1>Weather Finder</h1>
     <form id="locationForm">
-<input type="text" id="locationInput" placeholder="Enter location" />
-<label>
+      <input type="text" id="locationInput" placeholder="Enter location" />
+      <label>
         <input type="radio" name="unit" value="imperial" checked />
         Fahrenheit
-    </label>
-    <label>
+      </label>
+      <label>
         <input type="radio" name="unit" value="metric" />
         Celsius
-</label>
-<button type="submit">Get Forecast</button>
+      </label>
+      <button id="submitBtn" type="submit">Get Forecast</button>
+      <label for="savedAreaCheckbox">Would you like to save this area?</label>
+      <input type="checkbox" id="savedAreaCheckbox" name="savedAreaCheckbox">
     </form>
+    <button type="button" id="show">Show Saved Areas</button>
     <div id="weatherContainer"></div>
-
-    <script src="weather.js"></script>
+    <div id="SelectedAreas"></div>
 </body>
+<script src="weather.js"></script>
 </html>
