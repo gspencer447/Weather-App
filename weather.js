@@ -6,10 +6,15 @@ const API_URL =
 class SelectedAreas {
   constructor() {
     this.areas = JSON.parse(localStorage.getItem("selectedAreas")) || [];
+    this.saveAreas = function () {
+      localStorage.setItem("selectedAreas", JSON.stringify(this.areas));
+    };
 
     this.addArea = function (area) {
-      this.areas.push(area);
-      this.saveAreas();
+      if (!this.areas.includes(area)) {
+        this.areas.push(area);
+        this.saveAreas();
+      }
     };
 
     this.removeArea = function (area) {
@@ -19,10 +24,6 @@ class SelectedAreas {
         this.saveAreas();
       }
     };
-
-    this.saveAreas = function () {
-      localStorage.setItem("selectedAreas", JSON.stringify(this.areas));
-    };
   }
 }
 
@@ -31,83 +32,63 @@ console.log(selectedAreas.areas);
 let refresh = false;
 let showing = false;
 var favoriteAreas = document.getElementById("SelectedAreas");
-let show = (refresh, shown) => {
-  console.log(refresh, shown)
-  if (refresh == false && shown == false) {
-    selectedAreas.areas.map((area, ind) => {
-      let div = document.createElement("div");
-      div.className = `${area}${ind}`;
-      let location = document.createElement("p");
-      location.textContent = `${area}`;
-      let temp = document.createElement("button");
-      temp.textContent = "Temperature";
-      let remove = document.createElement("button");
-      remove.textContent = "Remove";
-      div.appendChild(location);
-      div.appendChild(temp);
-      div.appendChild(remove);
-      favoriteAreas.appendChild(div);
-      temp.addEventListener("click", (e) => {
-        fetchSelectedAreasWeather(area);
-      });
-      remove.addEventListener("click", (e) => {
-        favoriteAreas.removeChild(div);
-        selectedAreas.removeArea(area);
-      });
+
+let build = () => {
+  selectedAreas.areas.map((area, ind) => {
+    let div = document.createElement("div");
+    div.className = `${area}${ind}`;
+    let location = document.createElement("p");
+    location.textContent = `${area}`;
+    let temp = document.createElement("button");
+    temp.textContent = "Temperature";
+    let remove = document.createElement("button");
+    remove.textContent = "Remove";
+    div.appendChild(location);
+    div.appendChild(temp);
+    div.appendChild(remove);
+    favoriteAreas.appendChild(div);
+    temp.addEventListener("click", (e) => {
+      fetchSelectedAreasWeather(area);
     });
-    refresh= true;
-    showing = true;
-    console.log(refresh, showing)
-  } else if (refresh && shown) {
-    
-    while(favoriteAreas.lastChild){
-      favoriteAreas.removeChild(favoriteAreas.lastChild)
-    }
-    selectedAreas.areas.map((area, ind) => {
-      let div = document.createElement("div");
-      div.className = `${area}${ind}`;
-      let location = document.createElement("p");
-      location.textContent = `${area}`;
-      let temp = document.createElement("button");
-      temp.textContent = "Temperature";
-      let remove = document.createElement("button");
-      remove.textContent = "Remove";
-      div.appendChild(location);
-      div.appendChild(temp);
-      div.appendChild(remove);
-      favoriteAreas.appendChild(div);
-      temp.addEventListener("click", (e) => {
-        fetchSelectedAreasWeather(area);
-      });
-      remove.addEventListener("click", (e) => {
-        favoriteAreas.removeChild(div);
-        selectedAreas.removeArea(area);
-      });
+    remove.addEventListener("click", (e) => {
+      favoriteAreas.removeChild(div);
+      selectedAreas.removeArea(area);
     });
-    refresh= true;
+  });
+};
+
+let show = (refreshed, shown) => {
+  console.log(refreshed, shown);
+  if (refreshed == false && shown == false) {
+    favoriteAreas.innerHTML = "";
+    setTimeout(function () {
+      build();
+    }, 10);
+
+    refresh = true;
     showing = true;
-    console.log(refresh, showing)
-  }else{
-    while(favoriteAreas.lastChild){
-      favoriteAreas.removeChild(favoriteAreas.lastChild)
-    }
+    console.log(refresh, showing);
+  } else {
+    console.log("remove");
+    favoriteAreas.innerHTML = "";
     showing = false;
     refresh = false;
-    console.log(refresh, showing)
+    console.log(refresh, showing);
   }
-}
+};
 
 let showBtn = document.getElementById("show");
 showBtn.addEventListener("click", (e) => {
-  e.preventDefault()
-  if (refresh && shown) {
-    show(refresh, showing)
-  }else{
+  e.preventDefault();
+  if (refresh && showing) {
+    show(true, true);
+  } else {
     refresh = false;
-    show(refresh, showing)}
-  });
+    show(refresh, showing);
+  }
+});
 
-let subBtn = document.getElementById("submitBtn")
+let subBtn = document.getElementById("submitBtn");
 
 async function getWeather(location, unit) {
   const response = await fetch(
@@ -129,7 +110,7 @@ function extractWeatherData(data) {
     icon: data.weather[0].icon,
     lastUpdated: new Date().toLocaleString(),
   };
-  
+
   return weatherData;
 }
 
@@ -163,7 +144,6 @@ function displayWeather(weatherData, unit) {
   lastUpdatedElement.className = "weather-info";
   lastUpdatedElement.textContent = "Last Updated: " + weatherData.lastUpdated;
   weatherContainer.appendChild(lastUpdatedElement);
-
 }
 
 function fetchSelectedAreasWeather(area) {
@@ -184,37 +164,31 @@ function displayLoading() {
   weatherContainer.innerHTML = "Loading...";
 }
 
-document
-  .getElementById("locationForm")
-  .addEventListener("submit", (event) => {
-    event.preventDefault();
+document.getElementById("locationForm").addEventListener("submit", (event) => {
+  event.preventDefault();
 
-    var location = document.getElementById("locationInput").value;
-    var unit = document.querySelector('input[name="unit"]:checked').value;
-     
+  var location = document.getElementById("locationInput").value;
+  var unit = document.querySelector('input[name="unit"]:checked').value;
 
-    getWeather(location, unit)
-      .then(function (weatherData) {
-        var processedData = extractWeatherData(weatherData);
-        displayWeather(processedData, unit);
+  getWeather(location, unit)
+    .then(function (weatherData) {
+      var processedData = extractWeatherData(weatherData);
+      displayWeather(processedData, unit);
 
-        if (document.getElementById("savedAreaCheckbox").checked) {
-          selectedAreas.addArea(location);
-        }
-      })
-      .catch(function (error) {
-        console.log(
-          "Error fetching weather for " + location + ": " + error.message
-        );
-      });
-  });
-  subBtn.addEventListener("click", (e) => {
-    
-    console.log('submit', refresh, showing)
-    if(showing == false)
-    show(false, true)
-    else if(showing)
-    show(true, true)
- 
-})
-//Figure out how to cover all scenarios with the submit button
+      if (document.getElementById("savedAreaCheckbox").checked) {
+        selectedAreas.addArea(location);
+      }
+    })
+    .catch(function (error) {
+      console.log(
+        "Error fetching weather for " + location + ": " + error.message
+      );
+    })
+    .finally(() => {
+      console.log(showing);
+      if (showing) {
+        console.log("showing");
+        show(false, false);
+      }
+    });
+});
